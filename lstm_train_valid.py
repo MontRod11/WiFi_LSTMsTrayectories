@@ -49,34 +49,12 @@ def get_device():
 device = get_device()
 print(device)
 
-# In[4]: Weight and bias
-
-# import wandb
-# wandb.login() 
-# config = dict(epochs=135,
-#               batch_size=96,
-#               learning_rate=0.007483331027090882, #0.4595
-#               optimizer=1,
-#               hidden_size=172,
-#               num_layers=3,
-#               momentum=0.7466303076862322,
-#               sequence_length=9,
-#               factor_solape =0.37732109188532703,
-#               teacher_forcing_ratio = 0.3213435976562098,
-#               gamma = 0.11312933100410848)
-
-# config = dict(solape=0,
-#               sequence_length=24)
-# 1. Start a new run
-# wandb.init(project='optimizacionHiperparametros_v1', entity='laumont', config=config)
-# # 2. Save model inputs and hyperparameters
-# config = wandb.config
-
 # In[5.1]: Preprocesado de los datos de entrenamiento
 
 # Apertura del documento que contiene los datos del conjunto de entrenamiento
-coordenadas_train = pd.read_csv("/home/laura/TrayectoriasLSTM/datasets/new_train/nexus/conjuntoTrain_numTrayectorias187_Nexus_difGPSfreqcon0_numTrayectoriasTest40_numTrayectoriasValid46.csv",header=None) 
-txt ="conjuntoTrain_numTrayectorias187_Nexus_difGPSfreqcon0_numTrayectoriasTest40_numTrayectoriasValid46.csv"
+txt ="conjuntoTrain_numTrayectorias170_Nexus_difGPSfreqcon0_numTrayectoriasTest7_numTrayectoriasValid57_distValidTrain.csv"
+coordenadas_train = pd.read_csv("/home/laura/DATASETS/train_dataset/Dataset/Nexus/"+txt,header=None) 
+
 
 # Extracción del número de trayectorias que conforman el conjunto de entrenamiento para facilitar su guardado y localización para tratar los datos
 # Realmente, por el tratamiento previo en MATLAB realmente este 'numTrayect' que indica el nombre es la suma de las trayectorias de entrenamiento y de validación. 
@@ -118,8 +96,9 @@ trayect_labels_train_norm = torch.tensor(trayect_labels_train_norm, dtype= torch
 # In[5.2]: Preprocesado de los datos de validación
 
 # Apertura del documento que contiene los datos del conjunto de validación
-coordenadas_valid= pd.read_csv("/home/laura/TrayectoriasLSTM/datasets/new_valid/nexus/conjuntoValid_numTrayectorias187_numTrayectoriasValid46_Nexus_difGPSfreqcon0_numTrayectoriasTest40.csv",header=None) 
-txt_valid = 'conjuntoValid_numTrayectorias187_numTrayectoriasValid46_Nexus_difGPSfreqcon0_numTrayectoriasTest40.csv'
+txt_valid = 'conjuntoValid_numTrayectorias170_numTrayectoriasValid57_Nexus_difGPSfreqcon0_numTrayectoriasTest7_distValidTrain.csv'
+coordenadas_valid= pd.read_csv("/home/laura/DATASETS/valid_dataset/Dataset/Nexus/"+txt_valid,header=None) 
+
 numeros_nombre_valid = [float(s) for s in re.findall(r'-?\d+\.?\d*', txt_valid)]
 numTrayects_valid = int(numeros_nombre_valid[1])
 
@@ -253,15 +232,6 @@ trayectoria_ensecuencia_valid, targets_ensecuencia_valid = completeseq_consolape
 train_set = TensorDataset(trayectoria_ensecuencia_train, targets_ensecuencia_train)
 valid_set = TensorDataset(trayectoria_ensecuencia_valid, targets_ensecuencia_valid)
 
-
-"""
-Problema que veo para hacer la distinción entre secuencias de las distintas trayectorias para la representación en test:
-    Más que la distinción de que secuencia pertenece a que trayectoria (lo cuál es más bien sencillo al contar con la variable numsecuencias_cadatrayect_test)
-    veo el problema en distinguir que trayectorias pertenecen a que días ya que esta información se pierde en la propia córeacin del conjunto de test con MATLAB.
-    Para ello hay que ver si se puede mecanizar o si se debe introducir de manera manual el número de trayectorias que pertenecen a los distintos dias. Más que 
-    nada porque esta información es relevante a la hora de calcular errores y poder hablar sobre degradación de la ubicación a lo largo del tiempo.
-"""
-
 # In[8]:  Creación de los dataloaders
 
 # Tamaño de 'batch_size' para el conjunto de entrenamiento y de 'tbatch_size' para el conjunto de test y el de validación
@@ -315,8 +285,6 @@ class WifiLSTM_withLinear(nn.Module):
     def forward(self, x_in, h0,c0, h1,c1):
         (hid_lay1, c_lay1) = self.wifi_lstm_lay1(x_in, (h0,c0))
         (hid_lay2, c_lay2) = self.wifi_lstm_lay2(hid_lay1,(h1,c1))
-        # r_out, (hid, c) = self.wifi_lstm(x_in, (h0,c0))
-        # out = self.out(r_out)
         out = self.out(hid_lay2)
         return out, (hid_lay1, c_lay1), (hid_lay2, c_lay2)
 
@@ -337,8 +305,6 @@ class Wifi_fullLSTMCells(nn.Module):
     def forward(self, x_in, h0,c0, h1,c1, h2,c2):
         (hid_lay1, c_lay1) = self.wifi_lstm_lay1(x_in, (h0,c0))
         (hid_lay2, c_lay2) = self.wifi_lstm_lay2(hid_lay1,(h1,c1))
-        # r_out, (hid, c) = self.wifi_lstm(x_in, (h0,c0))
-        # out = self.out(r_out)
         (hid_out, c_out) = self.lstm_out(hid_lay2,(h2,c2))
         return (hid_out,c_out), (hid_lay1, c_lay1), (hid_lay2, c_lay2)
 
@@ -373,30 +339,6 @@ else:
     print('Error al declarar la arquitectura')
     exit()
 
-# Esta clase define una arquitectura donde se tienen dos capas de LSTM definidas usando directamente el módulo nn.LSTM().
-# En este caso se indica directamente el número de capas concatenadas. Se aplica una 'fully_conneccted' a la salida.
-# class WifiLSTM(nn.Module):
-#     def __init__(self, i_size, h_size, n_layers, num_classes):
-#         super(WifiLSTM, self).__init__()
-#         self.input_size = i_size
-#         self.hidden_size = h_size
-#         self.num_layers = n_layers
-#         self.num_classes = num_classes
-#
-#         self.wifi_lstm = nn.LSTM(input_size=self.input_size, hidden_size=self.hidden_size, num_layers=self.num_layers,
-#                                 batch_first=True)
-#         self.out = nn.Linear(in_features=self.hidden_size, out_features=self.num_classes)
-#
-#     def forward(self, x_in):
-#         c0 = torch.zeros(self.num_layers, x_in.size(0), self.hidden_size).to(device)
-#         h0 = torch.zeros(self.num_layers, x_in.size(0), self.hidden_size).to(device)
-#         r_out, (hid, c) = self.wifi_lstm(x_in, (h0,c0))
-#         out = self.out(r_out)
-#         return out , hid
-# Declaración para el uso de la arquitectura que acaba con una capa 'fully_connected' y usa directamente el módulo nn.LSTM():
-# lstm = WifiLSTM(in_size, hidd_d, num_lay, out_dim).to(device)
-
-
 # Creación del modelo:
 model = lstm
 print(model)
@@ -418,7 +360,6 @@ teacher_forcing_ratio = 0.046792982444183215
 def train_seq(train_load, net, loss_function, epoch, col, seq_len, b_size, device, optimizer):
     train_loss = []
     for step, (data, targets) in enumerate(train_load):
-        # Se inicializan a cero porque cada (data, targets) del loader representan secuencias distintas
         c0 = torch.zeros(batch_size, hidd_d).to(device)
         hidden_0 = torch.zeros(batch_size, hidd_d).to(device)
         c1 = torch.zeros(batch_size, hidd_d).to(device)
@@ -428,30 +369,17 @@ def train_seq(train_load, net, loss_function, epoch, col, seq_len, b_size, devic
         data, targets = data.to(device), targets.to(device)
         optimizer.zero_grad()
         # with ef.scan():
-        # se da tamaño a la salida, la cual tiene que tener el tamaño del 'target' esperado.
         output = torch.zeros(targets.shape).to(device)
-        # Determinación del uso o no de teacher forcing para cada una de las trayectorias.
         use_teacher_forcing = True if random.random() < teacher_forcing_ratio else False
         if use_teacher_forcing:
             for i in range(targets.shape[1]):
                 (hidden_2,c2), (hidden_0, c0), (hidden_1, c1) = net(data[:,i], hidden_0, c0, hidden_1, c1, hidden_2, c2) 
                 output[:,i,:] = hidden_2
-                # En este caso, en lugar de introducir el estado de salida a la siguiente celda LSTM (3ª capa) se introduce la
-                # salida real.
                 hidden_2 = targets[:,i]
-                # En output esta la salida de la lstm final -> coordenadas predichas para la posición introducida.
-                # En hidden esta el estado oculto (la salida que se elige) de la LSTMCell para la posición introducida.
-                # En c0 esta el estado de la celda que se realimenta para la siguiente posición que se introduzca.
         else:    
             for i in range(targets.shape[1]):
                 (hidden_2,c2), (hidden_0, c0), (hidden_1, c1) = net(data[:,i], hidden_0, c0, hidden_1, c1, hidden_2, c2) 
                 output[:,i,:] = hidden_2
-                # En output esta la salida de la lstm-final -> coordenadas predichas para la posición introducida.
-                # En hidden esta el estado oculto (la salida que se elige) de la LSTMCell para la posición introducida.
-                # En c0 esta el estado de la celda que se realimenta para la siguiente posición que se introduzca.
-        # Si quisiesemos calcular la pérdida teniendo en cuenta el error de la última posición tan solo:
-        # loss = loss_function(output[:,-1,:], targets[:,-1,:])
-        # Si queremos calcular la pérdida teniendo en cuenta el error entre todas las posiciones predichas:
         loss = loss_function(output, targets)
         loss.backward()
         nn.utils.clip_grad_norm_(net.parameters(), max_norm=1)
@@ -459,7 +387,7 @@ def train_seq(train_load, net, loss_function, epoch, col, seq_len, b_size, devic
     
         train_loss.append(loss.item())
 
-    return sum(train_loss) / len(train_loss)  # per batch averaged loss for the current epoch.
+    return sum(train_loss) / len(train_loss) 
 
 # Definición de la función de validación de secuencias. Nótese que ahora no se aplica el Teacher Forcing para una arquitectura de 3 layers:
 def valid_seq(valid_load, seq_len, net, loss_function, device, optimizer, minmaxlat_train, minmaxlon_train, prueba):  # , state):
@@ -468,7 +396,6 @@ def valid_seq(valid_load, seq_len, net, loss_function, device, optimizer, minmax
     contador = 0
     with torch.no_grad():
         for step, (data, targets) in enumerate(valid_load):
-            # Se inicializan a cero porque cada (data, targets) del loader representan secuencias distintas
             c0 = torch.zeros(tbatch_size, hidd_d).to(device)
             hidden_0 = torch.zeros(tbatch_size, hidd_d).to(device)
             c1 = torch.zeros(tbatch_size, hidd_d).to(device)
@@ -479,7 +406,6 @@ def valid_seq(valid_load, seq_len, net, loss_function, device, optimizer, minmax
             data, targets = data.to(device), targets.to(device)
             output = torch.zeros(targets.shape).to(device)
             for i in range(targets.shape[1]):
-                # (output[:,i,:],c2), (hidden_0, c0), (hidden_1, c1) = net(data[:,i], hidden_0, c0, hidden_1, c1, hidden_2, c2) 
                 (hidden_2,c2), (hidden_0, c0), (hidden_1, c1) = net(data[:,i], hidden_0, c0, hidden_1, c1, hidden_2, c2) 
                 output[:,i,:] = hidden_2
 
@@ -488,7 +414,6 @@ def valid_seq(valid_load, seq_len, net, loss_function, device, optimizer, minmax
             #     check_accuracy_gifs_validTraining(output, targets, minmaxlat_train, minmaxlon_train, prueba, contador)
             valid_loss_per_batch.append(loss.item())
             contador = contador + 1
-    # per batch averaged loss for the current epoch.
     return sum(valid_loss_per_batch) / len(valid_loss_per_batch)
 
 
@@ -502,40 +427,24 @@ def valid_seq(valid_load, seq_len, net, loss_function, device, optimizer, minmax
 def train_seq2lay(train_load, net, loss_function, epoch, col, seq_len, b_size, device, optimizer):
     train_loss = []
     for step, (data, targets) in enumerate(train_load):
-        # Se inicializan a cero porque cada (data, targets) del loader representan secuencias distintas
         c0 = torch.zeros(batch_size, hidd_d).to(device)
         hidden_0 = torch.zeros(batch_size, hidd_d).to(device)
         c1 = torch.zeros(batch_size, out_dim).to(device)
         hidden_1 = torch.zeros(batch_size, out_dim).to(device)
-        # c2 = torch.zeros(batch_size, out_dim).to(device)
-        # hidden_2 = torch.zeros(batch_size, out_dim).to(device)
         data, targets = data.to(device), targets.to(device)
         optimizer.zero_grad()
         # with ef.scan():
-        # se da tamaño a la salida, la cual tiene que tener el tamaño del 'target' esperado.
         output = torch.zeros(targets.shape).to(device)
-        # Determinación del uso o no de teacher forcing para cada una de las trayectorias.
         use_teacher_forcing = True if random.random() < teacher_forcing_ratio else False
         if use_teacher_forcing:
             for i in range(targets.shape[1]):
                 (hidden_1, c1), (hidden_0, c0) = net(data[:,i], hidden_0, c0, hidden_1, c1) 
                 output[:,i,:] = hidden_1
-                # En este caso, en lugar de introducir el estado de salida a la siguiente celda LSTM (3ª capa) se introduce la
-                # salida real.
                 hidden_1 = targets[:,i]
-                # En output esta la salida de la lstm final -> coordenadas predichas para la posición introducida.
-                # En hidden esta el estado oculto (la salida que se elige) de la LSTMCell para la posición introducida.
-                # En c0 esta el estado de la celda que se realimenta para la siguiente posición que se introduzca.
         else:    
             for i in range(targets.shape[1]):
                 (hidden_1, c1), (hidden_0, c0) = net(data[:,i], hidden_0, c0, hidden_1, c1) 
                 output[:,i,:] = hidden_1
-                # En output esta la salida de la lstm-final -> coordenadas predichas para la posición introducida.
-                # En hidden esta el estado oculto (la salida que se elige) de la LSTMCell para la posición introducida.
-                # En c0 esta el estado de la celda que se realimenta para la siguiente posición que se introduzca.
-        # Si quisiesemos calcular la pérdida teniendo en cuenta el error de la última posición tan solo:
-        # loss = loss_function(output[:,-1,:], targets[:,-1,:])
-        # Si queremos calcular la pérdida teniendo en cuenta el error entre todas las posiciones predichas:
         loss = loss_function(output, targets)
         loss.backward()
         nn.utils.clip_grad_norm_(net.parameters(), max_norm=1)
@@ -543,7 +452,7 @@ def train_seq2lay(train_load, net, loss_function, epoch, col, seq_len, b_size, d
     
         train_loss.append(loss.item())
 
-    return sum(train_loss) / len(train_loss)  # per batch averaged loss for the current epoch.
+    return sum(train_loss) / len(train_loss)  
 
 # Definición de la función de validación de secuencias. Nótese que ahora no se aplica el Teacher Forcing para una arquitectura de 2 lay:
 def valid_seq2lay(valid_load, seq_len, net, loss_function, device, optimizer, minmaxlat_train, minmaxlon_train, prueba):  # , state):
@@ -552,7 +461,6 @@ def valid_seq2lay(valid_load, seq_len, net, loss_function, device, optimizer, mi
     contador = 0
     with torch.no_grad():
         for step, (data, targets) in enumerate(valid_load):
-            # Se inicializan a cero porque cada (data, targets) del loader representan secuencias distintas
             c0 = torch.zeros(tbatch_size, hidd_d).to(device)
             hidden_0 = torch.zeros(tbatch_size, hidd_d).to(device)
             c1 = torch.zeros(tbatch_size, out_dim).to(device)
@@ -561,7 +469,6 @@ def valid_seq2lay(valid_load, seq_len, net, loss_function, device, optimizer, mi
             data, targets = data.to(device), targets.to(device)
             output = torch.zeros(targets.shape).to(device)
             for i in range(targets.shape[1]):
-                # (output[:,i,:],c2), (hidden_0, c0), (hidden_1, c1) = net(data[:,i], hidden_0, c0, hidden_1, c1, hidden_2, c2) 
                 (hidden_1, c1), (hidden_0, c0) = net(data[:,i], hidden_0, c0, hidden_1, c1) 
                 output[:,i,:] = hidden_1
 
@@ -570,7 +477,6 @@ def valid_seq2lay(valid_load, seq_len, net, loss_function, device, optimizer, mi
             #     check_accuracy_gifs_validTraining(output, targets, minmaxlat_train, minmaxlon_train, prueba, contador)
             valid_loss_per_batch.append(loss.item())
             contador = contador + 1
-    # per batch averaged loss for the current epoch.
     return sum(valid_loss_per_batch) / len(valid_loss_per_batch)
 
 
@@ -600,11 +506,13 @@ loss_per_epoch_valid = np.Inf
 
 
 # Definición del 'scheduler' para cambiar de valor el 'learning_rate' tras un número determinado de epochs.
-# stepsize = int(1/4*num_epochs)#50
-# gamma = 0.2609678219930688	# config.gamma
-# scheduler = optim.lr_scheduler.StepLR(optimizer, 50, 0.2)
-# initialize the early_stopping object
-# patience = 20
+if sche == True:
+    stepsize = int(1/4*num_epochs)#50
+    gamma = 0.2609678219930688	# config.gamma
+    scheduler = optim.lr_scheduler.StepLR(optimizer, 50, 0.2)
+
+patience = 20
+
 if sche == True:
     if optimizador ==1:
         dirpath = 'models/model_numTrayectTrain'+str(numTrayect)+'seqtrain'+str(sequence_length_train)+'_numTrayectValid'+str(numTrayects_valid)+'_lr'+str(lr)+'_TeacherForcing'+str(teacher_forcing_ratio)+'_numLayers'+str(num_lay)+'_hiddNeurons'+str(hidd_d)+'_bs'+str(batch_size)+'_solape'+str(factor_solape)+'_optim'+str(optimizador)+'schedulerLRstepsize'+str(stepsize)+'gamma'+str(gamma)+'.pt'
@@ -617,11 +525,8 @@ else:
         dirpath = 'models/no_sheduler/model_numTrayectTrain'+str(numTrayect)+'seqtrain'+str(sequence_length_train)+'_numTrayectValid'+str(numTrayects_valid)+'_lr'+str(lr)+'_momentum'+str(momentum)+'_TeacherForcing'+str(teacher_forcing_ratio)+'_numLayers'+str(num_lay)+'_hiddNeurons'+str(hidd_d)+'_bs'+str(batch_size)+'_solape'+str(factor_solape)+'_optim'+str(optimizador)+'NoScheduler.pt'
 
 
-# early_stopping = EarlyStopping(patience=patience, verbose=True, delta=0.00000000000000001,path=dirpath)
-
 h_state = torch.zeros(num_lay, batch_size, hidd_d, dtype=torch.float).to(device)
-
-# wandb.watch(model, loss_func, log="all", log_freq=10)
+early_stopping = EarlyStopping(patience=patience, verbose=True,delta=0.00000000000000001,path=dirpath)
 
 # Entrenamiento como tal para un número determinado de épocas. La validación se hace cada 3 epocas:
     
@@ -636,28 +541,16 @@ if num_lay == 3:
             loss_per_epoch_valid = valid_seq(valid_loader, sequence_length_valid, model, loss_func, device, optimizer, minmaxlat_train, minmaxlon_train, epochs)
             validation_losses.append(loss_per_epoch_valid)
             if loss_per_epoch_valid <= valid_loss_min:
-                # old dataset:
-                # torch.save(model.state_dict(), 'models/model_numTrayectTrain'+str(numTrayect)+'seqtrain'+str(sequence_length_train)+'_nosolapadas.pt')
-                # new dataset with teacher forcing:
-                # if optimizador == 1:
-                #   torch.save(model.state_dict(), dirpath)
-                # elif optimizador == 2:
                 torch.save(model.state_dict(), dirpath)
                 valid_loss_min = loss_per_epoch_valid
-                # new dataset with no teacher forcing:
-                # torch.save(model.state_dict(), 'models/model_numTrayectTrain'+str(numTrayect)+'seqtrain'+str(sequence_length_train)+'_nosolapadas_NEWDATASET_divisionTrain.pt')
-                # valid_loss_min = loss_per_epoch_valid
-                # early_stopping needs the validation loss to check if it has decresed, 
-        # and if it has, it will make a checkpoint of the current model
-        # early_stopping(valid_loss_min, model)
+
+        early_stopping(valid_loss_min, model)
         
-        # if early_stopping.early_stop:
-        #     print("Early stopping")
-        #     break
+        if early_stopping.early_stop:
+             print("Early stopping")
+             break
         if sche == True:
             scheduler.step()
-        # wandb.log({"train_loss": loss_per_epoch_train})
-        # wandb.log({"valid_loss": loss_per_epoch_valid})
         print("Minimum validation loss for epoch " + str(epochs) + " is " + str(valid_loss_min))
         print("Training loss for epoch is " + str(loss_per_epoch_train))
 elif num_lay == 2:
@@ -671,32 +564,20 @@ elif num_lay == 2:
             loss_per_epoch_valid = valid_seq2lay(valid_loader, sequence_length_valid, model, loss_func, device, optimizer, minmaxlat_train, minmaxlon_train, epochs)
             validation_losses.append(loss_per_epoch_valid)
             if loss_per_epoch_valid <= valid_loss_min:
-                # old dataset:
-                # torch.save(model.state_dict(), 'models/model_numTrayectTrain'+str(numTrayect)+'seqtrain'+str(sequence_length_train)+'_nosolapadas.pt')
-                # new dataset with teacher forcing:
-                # if optimizador == 1:
-                #   torch.save(model.state_dict(), 'models/model_numTrayectTrain'+str(numTrayect)+'seqtrain'+str(sequence_length_train)+'_numTrayectValid'+str(numTrayects_valid)+'_lr'+str(lr)+'_TeacherForcing'+str(teacher_forcing_ratio)+'_numLayers'+str(num_lay)+'_hiddNeurons'+str(hidd_d)+'_bs'+str(batch_size)+'_solape'+str(factor_solape)+'_optim'+str(optimizador)+'schedulerLRstepsize'+str(stepsize)+'gamma'+str(gamma)+'.pt')
-                # elif optimizador == 2:
                 torch.save(model.state_dict(), dirpath)
                 valid_loss_min = loss_per_epoch_valid
-                # new dataset with no teacher forcing:
-                # torch.save(model.state_dict(), 'models/model_numTrayectTrain'+str(numTrayect)+'seqtrain'+str(sequence_length_train)+'_nosolapadas_NEWDATASET_divisionTrain.pt')
-                # valid_loss_min = loss_per_epoch_valid
         if sche == True:
             scheduler.step()
-        # early_stopping(valid_loss_min, model)
+        early_stopping(valid_loss_min, model)
         
-        # if early_stopping.early_stop:
-        #     print("Early stopping")
-        #     break
-        # wandb.log({"train_loss": loss_per_epoch_train})
-        # wandb.log({"valid_loss": loss_per_epoch_valid})
+        if early_stopping.early_stop:
+             print("Early stopping")
+             break
         print("Minimum validation loss for epoch " + str(epochs) + " is " + str(valid_loss_min))
         print("Training loss for epoch is " + str(loss_per_epoch_train))
 else:
     print('Error al entrenar')
     exit()
-
 
 # Representación de lasé prdidas de valóidacin y de entrenamiento
 plt.figure()
@@ -708,10 +589,51 @@ if sche == True:
 else:
     plt.savefig('models/train_valid_graph/model_numTrayectTrain'+str(numTrayect)+'seqtrain'+str(sequence_length_train)+'_numTrayectValid'+str(numTrayects_valid)+'_lr'+str(lr)+'_TeacherForcing'+str(teacher_forcing_ratio)+'_numLayers'+str(num_lay)+'_hiddNeurons'+str(hidd_d)+'_bs'+str(batch_size)+'_solape'+str(factor_solape)+'_optim'+str(optimizador)+'NoScheduler.png',format='png', dpi=600)    
 
-""" Añadir los ficheros creados para indicar los días a los que pertenecen las distintas secuencias / trayectorias"""
-lista_dias_valid = ["Secuencias validación "+str(numsecuencias_tot_valid)]*numsecuencias_tot_valid
-lista_dias_train = ["Secuencias entrenamiento "+str(numsecuencias_tot_train)]*numsecuencias_tot_train
 
+""" Añadir los ficheros creados para indicar los días a los que pertenecen las distintas secuencias / trayectorias"""
+
+numtrayectsTrain_txt = "numTrayectoriasTrain170_Nexus_numTrayectoriasTest7_numTrayectoriasValid57_numerodetrayectoriaspordia_test_distValidTrain.csv"
+numtrayectsValid_txt = "numTrayectoriasValid57_Nexus_numTrayectoriasTrain170_numTrayectoriasTest7_numerodetrayectoriaspordia_test_distValidTrain.csv"
+
+archivo_trayectoriasxdia_train = pd.read_csv("/home/laura/DATASETS/train_dataset/Dataset/Nexus/"+numtrayectsTrain_txt,header=None) 
+archivo_trayectoriasxdia_train = np.asarray(archivo_trayectoriasxdia_train).reshape(-1)
+
+num_dias_que_se_midieron_trayectorias_train = len(archivo_trayectoriasxdia_train)
+
+lista_dias_train = []
+
+if sum(archivo_trayectoriasxdia_train) == len(numsecuencias_cadatrayect_train):
+    for dia in range(num_dias_que_se_midieron_trayectorias_train):
+        trayectorias_xdia = archivo_trayectoriasxdia_train[dia]
+        secuencias_xdia = sum(numsecuencias_cadatrayect_train[np.sum(archivo_trayectoriasxdia_train[0:dia]):np.sum(archivo_trayectoriasxdia_train[0:dia]) +trayectorias_xdia])
+        print(np.sum(archivo_trayectoriasxdia_train[0:dia]))
+        print(np.sum(archivo_trayectoriasxdia_train[0:dia]) +trayectorias_xdia)
+        print(numsecuencias_cadatrayect_train[np.sum(archivo_trayectoriasxdia_train[0:dia]):np.sum(archivo_trayectoriasxdia_train[0:dia]) +trayectorias_xdia])
+        for j in range(secuencias_xdia):
+            lista_dias_train.append("Trayectoria del día "+str(dia))
+else:
+    print('Error con el numero de secuencias de Train')
+    exit()
+    
+archivo_trayectoriasxdia_valid = pd.read_csv("/home/laura/DATASETS/valid_dataset/Dataset/Nexus/"+numtrayectsValid_txt,header=None) 
+archivo_trayectoriasxdia_valid = np.asarray(archivo_trayectoriasxdia_valid).reshape(-1)
+
+num_dias_que_se_midieron_trayectorias_valid = len(archivo_trayectoriasxdia_valid)
+
+lista_dias_valid = []
+
+if sum(archivo_trayectoriasxdia_valid) == len(numsecuencias_cadatrayect_valid):
+    for dia in range(num_dias_que_se_midieron_trayectorias_valid):
+        trayectorias_xdia = archivo_trayectoriasxdia_valid[dia]
+        secuencias_xdia = sum(numsecuencias_cadatrayect_valid[np.sum(archivo_trayectoriasxdia_valid[0:dia]):np.sum(archivo_trayectoriasxdia_valid[0:dia]) +trayectorias_xdia])
+        print(np.sum(archivo_trayectoriasxdia_valid[0:dia]))
+        print(np.sum(archivo_trayectoriasxdia_valid[0:dia]) +trayectorias_xdia)
+        print(numsecuencias_cadatrayect_valid[np.sum(archivo_trayectoriasxdia_valid[0:dia]):np.sum(archivo_trayectoriasxdia_valid[0:dia]) +trayectorias_xdia])
+        for j in range(secuencias_xdia):
+            lista_dias_valid.append("Trayectoria del día "+str(dia))
+else:
+    print('Error con el numero de secuencias de Validación')
+    exit()    
 
 # In[13]: Definición de check_accuracy_imgs_seq():
     
@@ -748,20 +670,6 @@ def check_accuracy_imgs_seq(loader, net, dataset, name, loss_function, h_state, 
         test_losses = []
         total = []
         for step, (data, target) in enumerate(loader):
-            # if dataset == 'train':
-            #     c0 = torch.zeros(batch_size, hidd_d).to(device)
-            #     hidden_0 = torch.zeros(batch_size, hidd_d).to(device)
-            #     c1 = torch.zeros(batch_size, hidd_d).to(device)
-            #     hidden_1 = torch.zeros(batch_size, hidd_d).to(device)
-            #     c2 = torch.zeros(batch_size, out_dim).to(device)
-            #     hidden_2 = torch.zeros(batch_size, out_dim).to(device)
-            # else:
-            #     c0 = torch.zeros(tbatch_size, hidd_d).to(device)
-            #     hidden_0 = torch.zeros(tbatch_size, hidd_d).to(device)
-            #     c1 = torch.zeros(tbatch_size, hidd_d).to(device)
-            #     hidden_1 = torch.zeros(tbatch_size, hidd_d).to(device)
-            #     c2 = torch.zeros(tbatch_size, out_dim).to(device)
-            #     hidden_2 = torch.zeros(tbatch_size, out_dim).to(device)
             c0 = torch.zeros(tbatch_size, hidd_d).to(device)
             hidden_0 = torch.zeros(tbatch_size, hidd_d).to(device)
             c1 = torch.zeros(tbatch_size, hidd_d).to(device)
@@ -828,18 +736,21 @@ def check_accuracy_imgs_seq(loader, net, dataset, name, loss_function, h_state, 
             coordenadas_pred = coordenadas_pred.reshape(coordenadas_pred.shape[1],-1) 
             
             
-            # # Representación en el mapa de las coordenadas objetivo y las predichas:
+            # # Representación en el mapa de las coordenadas objetivo y las predichas, con lineas uniendo puntos:
             # BBox = (-3.15210, -3.14706, 40.64149, 40.64465)      
             # plt.figure()
             # map_image = plt.imread('../imgs/map_GuadaAfueras2.png')
             # fig, ax = plt.subplots(figsize = (8,7))
             # ax.scatter(coordenadas_obj[:,1],coordenadas_obj[:,0], zorder=1, alpha= 0.6, c='b', s=10)
-            # ax.scatter(coordenadas_pred[:,1],coordenadas_pred[:,0], zorder=1, alpha= 0.7, c='r', s=10)                
+            # ax.scatter(coordenadas_pred[:,1],coordenadas_pred[:,0], zorder=1, alpha= 0.7, c='r', s=10)  
+            
             # ax.set_title(listado_titulo[step])
             # ax.set_xlim(BBox[0],BBox[1]) # EJE DE LONGITUD
             # ax.set_ylim(BBox[2],BBox[3]) # EJE DE LATITUD
-            # ax.imshow(map_image, zorder=0, extent = BBox, aspect= 'equal') #, dpi=600)
-            # plt.savefig(namedir_props+'/Pruebamap_tray'+str(step)+'_predGuadaAfuerasTrain.png',format='png', dpi=600)
+            # plt.annotate("Inicio", (coordenadas_obj[0,1],coordenadas_obj[0,0]))
+            # plt.plot([coordenadas_obj[:,1],coordenadas_pred[:,1]],[coordenadas_obj[:,0],coordenadas_pred[:,0]],'-g',linewidth=0.5)
+            # ax.imshow(map_image, zorder=0, extent = BBox, aspect= 'equal')
+            # plt.savefig(namedir_export_test+'/Pruebamap_tray'+str(step)+'_predGuadaAfuerasTrain.png',format='png', dpi=600)
 
         test_losses.append(sum(test_loss) / len(test_loss))
         total = np.array(total)
@@ -892,16 +803,6 @@ def check_accuracy_imgs_seq2lay(loader, net, dataset, name, loss_function, h_sta
         test_losses = []
         total = []
         for step, (data, target) in enumerate(loader):
-            # if dataset == 'train':
-            #     c0 = torch.zeros(batch_size, hidd_d).to(device)
-            #     hidden_0 = torch.zeros(batch_size, hidd_d).to(device)
-            #     c1 = torch.zeros(batch_size, out_dim).to(device)
-            #     hidden_1 = torch.zeros(batch_size, out_dim).to(device)
-            # else:
-            #     c0 = torch.zeros(tbatch_size, hidd_d).to(device)
-            #     hidden_0 = torch.zeros(tbatch_size, hidd_d).to(device)
-            #     c1 = torch.zeros(tbatch_size, out_dim).to(device)
-            #     hidden_1 = torch.zeros(tbatch_size, out_dim).to(device)
             c0 = torch.zeros(tbatch_size, hidd_d).to(device)
             hidden_0 = torch.zeros(tbatch_size, hidd_d).to(device)
             c1 = torch.zeros(tbatch_size, out_dim).to(device)
@@ -967,18 +868,21 @@ def check_accuracy_imgs_seq2lay(loader, net, dataset, name, loss_function, h_sta
             coordenadas_pred = coordenadas_pred.reshape(coordenadas_pred.shape[1],-1) 
             
             
-            # # Representación en el mapa de las coordenadas objetivo y las predichas:
+            # # Representación en el mapa de las coordenadas objetivo y las predichas, con lineas uniendo puntos:
             # BBox = (-3.15210, -3.14706, 40.64149, 40.64465)      
             # plt.figure()
             # map_image = plt.imread('../imgs/map_GuadaAfueras2.png')
             # fig, ax = plt.subplots(figsize = (8,7))
             # ax.scatter(coordenadas_obj[:,1],coordenadas_obj[:,0], zorder=1, alpha= 0.6, c='b', s=10)
-            # ax.scatter(coordenadas_pred[:,1],coordenadas_pred[:,0], zorder=1, alpha= 0.7, c='r', s=10)                
+            # ax.scatter(coordenadas_pred[:,1],coordenadas_pred[:,0], zorder=1, alpha= 0.7, c='r', s=10)  
+            
             # ax.set_title(listado_titulo[step])
             # ax.set_xlim(BBox[0],BBox[1]) # EJE DE LONGITUD
             # ax.set_ylim(BBox[2],BBox[3]) # EJE DE LATITUD
-            # ax.imshow(map_image, zorder=0, extent = BBox, aspect= 'equal') #, dpi=600)
-            # plt.savefig(namedir_props+'/Pruebamap_tray'+str(step)+'_predGuadaAfuerasTrain.png',format='png', dpi=600)
+            # plt.annotate("Inicio", (coordenadas_obj[0,1],coordenadas_obj[0,0]))
+            # plt.plot([coordenadas_obj[:,1],coordenadas_pred[:,1]],[coordenadas_obj[:,0],coordenadas_pred[:,0]],'-g',linewidth=0.5)
+            # ax.imshow(map_image, zorder=0, extent = BBox, aspect= 'equal')
+            # plt.savefig(namedir_export_test+'/Pruebamap_tray'+str(step)+'_predGuadaAfuerasTrain.png',format='png', dpi=600)
 
         test_losses.append(sum(test_loss) / len(test_loss))
         total = np.array(total)
