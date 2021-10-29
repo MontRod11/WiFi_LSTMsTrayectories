@@ -922,9 +922,9 @@ if sche == True:
         model.load_state_dict(torch.load('models/model_numTrayectTrain'+str(numTrayect)+'seqtrain'+str(sequence_length_train)+'_numTrayectValid'+str(numTrayects_valid)+'_lr'+str(lr)+'_momentum'+str(momentum)+'_TeacherForcing'+str(teacher_forcing_ratio)+'_numLayers'+str(num_lay)+'_hiddNeurons'+str(hidd_d)+'_bs'+str(batch_size)+'_solape'+str(factor_solape)+'_optim'+str(optimizador)+'schedulerLRstepsize'+str(stepsize)+'gamma'+str(gamma)+'.pt'))
 else:
     if optimizador == 1:
-    model.load_state_dict(torch.load('models/no_scheduler/model_numTrayectTrain'+str(numTrayect)+'seqtrain'+str(sequence_length_train)+'_numTrayectValid'+str(numTrayects_valid)+'_lr'+str(lr)+'_TeacherForcing'+str(teacher_forcing_ratio)+'_numLayers'+str(num_lay)+'_hiddNeurons'+str(hidd_d)+'_bs'+str(batch_size)+'_solape'+str(factor_solape)+'_optim'+str(optimizador)+'NoScheduler.pt'))
+        model.load_state_dict(torch.load('models/no_scheduler/model_numTrayectTrain'+str(numTrayect)+'seqtrain'+str(sequence_length_train)+'_numTrayectValid'+str(numTrayects_valid)+'_lr'+str(lr)+'_TeacherForcing'+str(teacher_forcing_ratio)+'_numLayers'+str(num_lay)+'_hiddNeurons'+str(hidd_d)+'_bs'+str(batch_size)+'_solape'+str(factor_solape)+'_optim'+str(optimizador)+'NoScheduler.pt'))
 elif optimizador == 2:
-    model.load_state_dict(torch.load('models/no_scheduler/model_numTrayectTrain'+str(numTrayect)+'seqtrain'+str(sequence_length_train)+'_numTrayectValid'+str(numTrayects_valid)+'_lr'+str(lr)+'_momentum'+str(momentum)+'_TeacherForcing'+str(teacher_forcing_ratio)+'_numLayers'+str(num_lay)+'_hiddNeurons'+str(hidd_d)+'_bs'+str(batch_size)+'_solape'+str(factor_solape)+'_optim'+str(optimizador)+'NoScheduler.pt'))
+        model.load_state_dict(torch.load('models/no_scheduler/model_numTrayectTrain'+str(numTrayect)+'seqtrain'+str(sequence_length_train)+'_numTrayectValid'+str(numTrayects_valid)+'_lr'+str(lr)+'_momentum'+str(momentum)+'_TeacherForcing'+str(teacher_forcing_ratio)+'_numLayers'+str(num_lay)+'_hiddNeurons'+str(hidd_d)+'_bs'+str(batch_size)+'_solape'+str(factor_solape)+'_optim'+str(optimizador)+'NoScheduler.pt'))
 minmax = [minmaxlat_train, minmaxlon_train]
 
 train_state = torch.zeros(num_lay, batch_size, hidd_d, dtype=torch.float).to(device)
