@@ -24,6 +24,8 @@ from prepare_data import separate_data, min_max_norm, min_max_norm_test, coorden
 from prepare_data import coordenates_norm_test, coordenates_denorm
 from prepare_OverlapSequences import completeseq_consolape, num_seq_tot
 
+sche = False
+
 # In[2]: Semilla para reproducibilidad
 seed = 15
 torch.manual_seed(seed)    
@@ -45,7 +47,8 @@ print(device)
 # In[3.1]:Valores áximos y mínimos para la normalización de los datos de test:
     
 # Apertura del documento que contiene los datos del conjunto de entrenamiento
-coordenadas_train = pd.read_csv("/home/laura/TrayectoriasLSTM/datasets/new_train/nexus/conjuntoTrain_numTrayectorias187_Nexus_difGPSfreqcon0_numTrayectoriasTest40_numTrayectoriasValid46.csv",header=None) 
+txt = "conjuntoTrain_numTrayectorias20_Nexus_difGPSfreqcon0_numTrayectoriasTest23_numTrayectoriasValid9_distValidTrain.csv"
+coordenadas_train = pd.read_csv("/home/laura/DATASETS/train_dataset/Dataset/Nexus/TestFijo/"+txt,header=None) 
 
 # Separación de los datos de entrada de los 'target', datos objetivo. 
 trayect_data_train, trayect_labels_train = separate_data(coordenadas_train)
@@ -56,12 +59,15 @@ trayect_data_train_normalized, minvalue, maxvalue = min_max_norm(trayect_data_tr
 trayect_labels_train_norm = np.zeros(trayect_labels_train.shape)
 trayect_labels_train_norm[:,0], trayect_labels_train_norm[:,1], minmaxlat_train, minmaxlon_train = coordenates_norm(trayect_labels_train)
 
+txt_valid = 'conjuntoValid_numTrayectorias20_numTrayectoriasValid9_Nexus_difGPSfreqcon0_numTrayectoriasTest23_distValidTrain.csv'
+numeros_nombre_valid = [float(s) for s in re.findall(r'-?\d+\.?\d*', txt_valid)]
+numTrayects_valid = int(numeros_nombre_valid[1])
 
 # In[3.2]: Preprocesado de los datos de test, separación entre datos-etiquetas y normalización
   
 # Apertura del documento que contiene los datos del conjunto de 'test'
-coordenadas_test = pd.read_csv("/home/laura/TrayectoriasLSTM/datasets/new_test/nexus/conjuntoTest_numTrayectoriasTest40_Nexus_numTrayectoriasTrain187_difGPSfreqcon0_numTrayectoriasValid46.csv",header=None) 
 txt_test = 'conjuntoTest_numTrayectoriasTest40_Nexus_numTrayectoriasTrain187_difGPSfreqcon0_numTrayectoriasValid46.csv'
+coordenadas_test = pd.read_csv("/home/laura/DATASETS/test_dataset/Dataset/Nexus/TestFijo/"+txt_test,header=None) 
 numeros_nombre_test = [float(s) for s in re.findall(r'-?\d+\.?\d*', txt_test)]
 numTrayects_test = int(numeros_nombre_test[0])
 
@@ -75,7 +81,7 @@ coordenadas_test = coordenadas_test.set_index([cero_to_len_coordenadas_test])
 # trayectorias no cojan posiciones de trayectorias distintas. Es decir, todas las posiciones de una secuencia solo pertenecen a una misma trayectoria.
 # En este dataset las nulas no están puestas a -200, por eso se ven muchísimos 1's en vez de 0's
 listado_test = coordenadas_test[coordenadas_test[0]==0].index.tolist()
-listado_test = np.asarray(listado_test);
+listado_test = np.asarray(listado_test)
 
 coordenadas_nptest = np.asarray(coordenadas_test)
 
@@ -120,7 +126,7 @@ class indexSampler(Sampler):
             return self.listado[ind+1]-self.listado[ind]
 
 # Creación de los distintos muestreadores para los distintos conjuntos de datos.
-testSampler = indexSampler(listado_test,numpositionstest);
+testSampler = indexSampler(listado_test,numpositionstest)
 
 # In[5]:  Creación de los dataset donde la primera dimension de los datos es el número total de trayectorias, la segunda la longitud de la trayectoria y la tercera el número de puntos de acceso.
 
@@ -166,14 +172,28 @@ for step, (data, targets) in enumerate(test_loader):
   break
 
 # In[7]:  Creación de la arquitectura del modelo (WifiLSTM_withLinear = LSTM con Cells y una fully connected; Wifi_fullLSTMCells = LSTM hecha solo con cells)
+sequence_length_train = 16 
+lr = 0.005637669307211288
+teacher_forcing_ratio = 0.046792982444183215
+num_lay = 2
+hidd_d = 116 
+batch_size = 47
+factor_solape = 0.24941425634282657
+optimizador = 1
+stepsize = 13
+gamma = 0.2609678219930688
+sche = False
+if sche == True:
+    modelname = 'model_numTrayectTrain'+str(numTrayect)+'seqtrain'+str(sequence_length_train)+'_numTrayectValid'+str(numTrayects_valid)+'_lr'+str(lr)+'_TeacherForcing'+str(teacher_forcing_ratio)+'_numLayers'+str(num_lay)+'_hiddNeurons'+str(hidd_d)+'_bs'+str(batch_size)+'_solape'+str(factor_solape)+'_optim'+str(optimizador)+'schedulerLRstepsize'+str(stepsize)+'gamma'+str(gamma)
+else:
+    modelname = 'model_numTrayectTrain'+str(numTrayect)+'seqtrain'+str(sequence_length_train)+'_numTrayectValid'+str(numTrayects_valid)+'_lr'+str(lr)+'_TeacherForcing'+str(teacher_forcing_ratio)+'_numLayers'+str(num_lay)+'_hiddNeurons'+str(hidd_d)+'_bs'+str(batch_size)+'_solape'+str(factor_solape)+'_optim'+str(optimizador)+'NoScheduler'
+
 
 # Establecimiento del tamaño de entrada de la red = Nº de puntos de acceso vistos. Establecimiento de parámetrros de la red como
 # tamaño de salida, número de capas (solo válido si se usa el modelo de WifiLSTM cuya arquitectura usa el módulo nn.LSTM en vez de 
 # nn.LSTMCell) y número de nodos de cada capa oculta.
 in_size = trayect_data_train_normalized.shape[1] 
 out_dim = 2
-num_lay = 2 # config.num_layers
-hidd_d = 118  # config.hidden_size
 
 
 # Esta clase define una arquitectura donde se tienen dos capas de LSTM definidas de manera manual usando LSTMCell. Tras eso se le aplica
@@ -253,12 +273,14 @@ else:
     
 # Creación del modelo:
 model = lstm
-modelname = 'models/model_numTrayectTrain187seqtrain6_numTrayectValid46_lr0.004302485697165382_TeacherForcing0.4831502728497575_numLayers2_hiddNeurons118_bs61_solape0.3080681068259487_optim1schedulerLRstepsize52gamma0.07958760930423393'
-model.load_state_dict(torch.load(modelname+'.pt'))
-
+if sche == True:
+    model.load_state_dict(torch.load('models/TestFijo/'+modelname+'.pt'))
+else:
+    model.load_state_dict(torch.load('models/no_scheduler/TestFijo/'+modelname+'.pt'))
 # In[8]: Determinación del título de las imágenes para distinguir entre las trayectorias de un día y otras
 
-archivo_trayectoriasxdia = pd.read_csv("/home/laura/TrayectoriasLSTM/datasets/new_test/nexus/numTrayectoriasTest40_Nexus_numTrayectoriasTrain187_numTrayectoriasValid46_numerodetrayectoriaspordia_test.csv",header=None) 
+numtrayectsTest_txt = "numTrayectoriasTest40_Nexus_numTrayectoriasTrain187_numTrayectoriasValid46_numerodetrayectoriaspordia_test.csv"
+archivo_trayectoriasxdia = pd.read_csv("/home/laura/DATASETS/train_dataset/Dataset/Nexus/TestFijo/"+numtrayectsTest_txt,header=None) 
 archivo_trayectoriasxdia = np.asarray(archivo_trayectoriasxdia).reshape(-1)
 
 num_dias_que_se_midieron_trayectorias_test = len(archivo_trayectoriasxdia)
@@ -349,6 +371,40 @@ def check_accuracy_imgs_seq(loader, net, dataset, name, loss_function, h_state, 
             savetxt(namedir_export_test+'/coordtarget_step'+str(step)+'.csv',predcoord_denorm, delimiter=',') 
 
             
+            if int(''.join(filter(str.isdigit,listado_titulo[step]))) != var:
+                namedir_export_test_error = '../results/'+dataset+'/'+name+'/'+nameprop+'/export/Trayectoria_Dia_'+str(int(''.join(filter(str.isdigit,listado_titulo[step-1]))))
+                medidas_dias = np.array(medidas_dias)
+                error_medio_dia = sum(medidas_dias)/len(medidas_dias)
+                max_error_dia = max(medidas_dias)
+                min_error_dia = min(medidas_dias)
+                mse_dia = sum(medidas_dias**2)/len(medidas_dias)
+                Info = 'Para las '+str(len(medidas_dias))+' posiciones de las secuencias del dia '+str(int(''.join(filter(str.isdigit,listado_titulo[step]))))+'  del conjunto de '+dataset+', el error de las secuencias es:'
+                Info = Info + '\nEl error medio es de: '+str(error_medio_dia)+' metros. \nEl error máximo es de: '+str(max_error_dia)+' metros y el mínimo es de: '+str(min_error_dia)+' metros.\n El error cuadrático medio es de: '+str(mse_dia)+' metros.'
+                
+                f = open(namedir_export_test_error+'/informacion_error_total_dia'+str(int(''.join(filter(str.isdigit,listado_titulo[step-1]))))+'.txt','wt')
+                f.write(Info)
+                f.close()
+                medidas_dias = []
+                var = int(''.join(filter(str.isdigit,listado_titulo[step])))
+            else:
+                var = int(''.join(filter(str.isdigit,listado_titulo[step])))
+
+            distancia_coords = np.zeros((scores.shape[0]))
+            for i in range(0,len(scores)):
+                # distancia_coords[i] = hs.haversine(scores[i,:],target[i,:],unit=Unit.METERS)
+                  distancia_coords[i] = hs.haversine(coord_denorm[i,:],predcoord_denorm[i,:],unit=Unit.METERS)
+                  total.append(distancia_coords[i])
+            error_medio = sum(distancia_coords)/len(distancia_coords)
+            max_error = max(distancia_coords)
+            min_error = min(distancia_coords)
+            mse = sum(distancia_coords**2)/len(distancia_coords)
+            Info = 'Para la secuencia '+str(step)+' de la trayectoria del día del conjunto de '+dataset+', el error entre cada una de las posiciones es:\n'+str(distancia_coords)+' metros.'
+            Info = Info + '\nEl error medio es de: '+str(error_medio)+' metros. \nEl error máximo es de: '+str(max_error)+' metros y el mínimo es de: '+str(min_error)+' metros.\n El error cuadrático medio es de: '+str(mse)+' metros.'
+            
+            f = open(namedir+'/informacion_error_secuencia'+str(step)+'.txt','wt')
+            f.write(Info)
+            f.close()
+
             print('coord_target = {}  -> predicted coord = {},'.format(coord_denorm, predcoord_denorm))
             pred_coordenates.append(predcoord_denorm)
             coordenates.append(coord_denorm)
@@ -375,7 +431,37 @@ def check_accuracy_imgs_seq(loader, net, dataset, name, loss_function, h_state, 
             # ax.imshow(map_image, zorder=0, extent = BBox, aspect= 'equal') #, dpi=600)
             # plt.savefig(namedir_props+'/Pruebamap_tray'+str(step)+'_predGuadaAfuerasTrain.png',format='png', dpi=600)
 
+        if int(''.join(filter(str.isdigit,listado_titulo[step]))) != var:
+            namedir_export_test_error = '../results/'+dataset+'/'+name+'/'+nameprop+'/export/Trayectoria_Dia_'+str(int(''.join(filter(str.isdigit,listado_titulo[step-1]))))
+            medidas_dias = np.array(medidas_dias)
+            error_medio_dia = sum(medidas_dias)/len(medidas_dias)
+            max_error_dia = max(medidas_dias)
+            min_error_dia = min(medidas_dias)
+            mse_dia = sum(medidas_dias**2)/len(medidas_dias)
+            Info = 'Para las '+str(len(medidas_dias))+' posiciones de las secuencias del dia '+str(int(''.join(filter(str.isdigit,listado_titulo[step]))))+'  del conjunto de '+dataset+', el error de las secuencias es:'
+            Info = Info + '\nEl error medio es de: '+str(error_medio_dia)+' metros. \nEl error máximo es de: '+str(max_error_dia)+' metros y el mínimo es de: '+str(min_error_dia)+' metros.\n El error cuadrático medio es de: '+str(mse_dia)+' metros.'
+                
+            f = open(namedir_export_test_error+'/informacion_error_total_dia'+str(int(''.join(filter(str.isdigit,listado_titulo[step-1]))))+'.txt','wt')
+            f.write(Info)
+            f.close()
+            medidas_dias = []
+            var = int(''.join(filter(str.isdigit,listado_titulo[step])))
+        else:
+            var = int(''.join(filter(str.isdigit,listado_titulo[step])))
+
+
         test_losses.append(sum(test_loss) / len(test_loss))
+        total = np.array(total)
+        error_medio = sum(total)/len(total)
+        max_error = max(total)
+        min_error = min(total)
+        mse = sum(total**2)/len(total)
+        Info = 'Cogiendo todas las secuencias que salen de las trayectorias tomadas para el conjunto de '+dataset+', se obtiene:'
+        Info = Info + '\n\tEl error medio es de: '+str(error_medio)+' metros. \n\tEl error máximo es de: '+str(max_error)+' metros y el mínimo es de: '+str(min_error)+' metros.\n\tEl error cuadrático medio es de: '+str(mse)+' metros.'
+        
+        f = open(namedir+'/informacion_error_total_secuencias.txt','wt')
+        f.write(Info)
+        f.close()   
         return pred_coordenatestot, coordenatestot
 
 
@@ -447,6 +533,41 @@ def check_accuracy_imgs_seq2lay(loader, net, dataset, name, loss_function, h_sta
             savetxt(namedir_export_test+'/coordtarget_step'+str(step)+'.csv',predcoord_denorm, delimiter=',') 
 
             
+            distancia_coords = np.zeros((scores.shape[0]))
+            if int(''.join(filter(str.isdigit,listado_titulo[step]))) != var:
+                namedir_export_test_error = '../results/'+dataset+'/'+name+'/'+nameprop+'/export/Trayectoria_Dia_'+str(int(''.join(filter(str.isdigit,listado_titulo[step-1]))))
+                medidas_dias = np.array(medidas_dias)
+                error_medio_dia = sum(medidas_dias)/len(medidas_dias)
+                max_error_dia = max(medidas_dias)
+                min_error_dia = min(medidas_dias)
+                mse_dia = sum(medidas_dias**2)/len(medidas_dias)
+                Info = 'Para las '+str(len(medidas_dias))+' posiciones de las secuencias del dia '+str(int(''.join(filter(str.isdigit,listado_titulo[step]))))+'  del conjunto de '+dataset+', el error de las secuencias es:'
+                Info = Info + '\nEl error medio es de: '+str(error_medio_dia)+' metros. \nEl error máximo es de: '+str(max_error_dia)+' metros y el mínimo es de: '+str(min_error_dia)+' metros.\n El error cuadrático medio es de: '+str(mse_dia)+' metros.'
+                
+                f = open(namedir_export_test_error+'/informacion_error_total_dia'+str(int(''.join(filter(str.isdigit,listado_titulo[step-1]))))+'.txt','wt')
+                f.write(Info)
+                f.close()
+                medidas_dias = []
+                var = int(''.join(filter(str.isdigit,listado_titulo[step])))
+            else:
+                var = int(''.join(filter(str.isdigit,listado_titulo[step])))
+            for i in range(0,len(scores)):
+                # distancia_coords[i] = hs.haversine(scores[i,:],target[i,:],unit=Unit.METERS)
+                  distancia_coords[i] = hs.haversine(coord_denorm[i,:],predcoord_denorm[i,:],unit=Unit.METERS)
+                  medidas_dias.append(distancia_coords[i])
+                  total.append(distancia_coords[i])
+            error_medio = sum(distancia_coords)/len(distancia_coords)
+            max_error = max(distancia_coords)
+            min_error = min(distancia_coords)
+            mse = sum(distancia_coords**2)/len(distancia_coords)
+            Info = 'Para la secuencia '+str(step)+' de la trayectoria del día del conjunto de '+dataset+', el error entre cada una de las posiciones es:\n'+str(distancia_coords)+' metros.'
+            Info = Info + '\nEl error medio es de: '+str(error_medio)+' metros. \nEl error máximo es de: '+str(max_error)+' metros y el mínimo es de: '+str(min_error)+' metros.\n El error cuadrático medio es de: '+str(mse)+' metros.'
+            
+            f = open(namedir_export_test+'/informacion_error_secuencia'+str(step)+'.txt','wt')
+            f.write(Info)
+            f.close()
+
+            
             print('coord_target = {}  -> predicted coord = {},'.format(coord_denorm, predcoord_denorm))
             pred_coordenates.append(predcoord_denorm)
             coordenates.append(coord_denorm)
@@ -457,7 +578,7 @@ def check_accuracy_imgs_seq2lay(loader, net, dataset, name, loss_function, h_sta
             coordenadas_obj = np.asarray(coordenates)
             coordenadas_obj = coordenadas_obj.reshape(coordenadas_obj.shape[1],-1)
             coordenadas_pred = np.asarray(pred_coordenates)
-            coordenadas_pred = coordenadas_pred.reshape(coordenadas_pred.shape[1],-1) 
+            coordenadas_pred = coordenadas_pred.reshape(coordenadas_pred.shape[1],-1)  
             
             
             # # Representación en el mapa de las coordenadas objetivo y las predichas:
@@ -473,7 +594,34 @@ def check_accuracy_imgs_seq2lay(loader, net, dataset, name, loss_function, h_sta
             # ax.imshow(map_image, zorder=0, extent = BBox, aspect= 'equal') #, dpi=600)
             # plt.savefig(namedir_props+'/Pruebamap_tray'+str(step)+'_predGuadaAfuerasTrain.png',format='png', dpi=600)
 
+        namedir_export_test_error = '../results/'+dataset+'/'+name+'/'+nameprop+'/export/Trayectoria_Dia_'+str(int(''.join(filter(str.isdigit,listado_titulo[step-1]))))
+        medidas_dias = np.array(medidas_dias)
+        error_medio_dia = sum(medidas_dias)/len(medidas_dias)
+        max_error_dia = max(medidas_dias)
+        min_error_dia = min(medidas_dias)
+        mse_dia = sum(medidas_dias**2)/len(medidas_dias)
+        Info = 'Para las '+str(len(medidas_dias))+' posiciones de las secuencias del dia '+str(int(''.join(filter(str.isdigit,listado_titulo[step]))))+'  del conjunto de '+dataset+', el error de las secuencias es:'
+        Info = Info + '\nEl error medio es de: '+str(error_medio_dia)+' metros. \nEl error máximo es de: '+str(max_error_dia)+' metros y el mínimo es de: '+str(min_error_dia)+' metros.\n El error cuadrático medio es de: '+str(mse_dia)+' metros.'
+                
+        f = open(namedir_export_test_error+'/informacion_error_total_dia'+str(int(''.join(filter(str.isdigit,listado_titulo[step-1]))))+'.txt','wt')
+        f.write(Info)
+        f.close()
+        medidas_dias = []
+        var = int(''.join(filter(str.isdigit,listado_titulo[step])))
+
+
         test_losses.append(sum(test_loss) / len(test_loss))
+        total = np.array(total)
+        error_medio = sum(total)/len(total)
+        max_error = max(total)
+        min_error = min(total)
+        mse = sum(total**2)/len(total)
+        Info = 'Cogiendo todas las secuencias que salen de las trayectorias tomadas para el conjunto de '+dataset+', se obtiene:'
+        Info = Info + '\n\tEl error medio es de: '+str(error_medio)+' metros. \n\tEl error máximo es de: '+str(max_error)+' metros y el mínimo es de: '+str(min_error)+' metros.\n\tEl error cuadrático medio es de: '+str(mse)+' metros.'
+        
+        f = open(namedir+'/informacion_error_total_secuencias.txt','wt')
+        f.write(Info)
+        f.close()   
         return pred_coordenatestot, coordenatestot
 
 # In[10]:  Pruebas de test: se debe pasar batch_size uno y no representa r en la misma todas las salidas de batches sino representar una a una las 
@@ -484,12 +632,12 @@ test_state = torch.zeros(num_lay, tbatch_size, hidd_d, dtype=torch.float).to(dev
 loss_func = nn.MSELoss() 
 
 if num_lay == 3:
-    nameprop = 'numTrayectsTest'+str(numTrayects_test)+modelname
+    nameprop = modelname
     # new dataset:  
-    predictions, targets = check_accuracy_imgs_seq(test_loader, model, 'test','numtrayectstest'+str(numTrayects_test), loss_func, test_state,sequence_length_test,in_size,tbatch_size, device, minmax, nameprop, lista_dias_de_las_secuencias)
+    predictions, targets = check_accuracy_imgs_seq(test_loader, model, 'test','TestFijo/numtrayectstest'+str(numTrayects_test), loss_func, test_state,sequence_length_test,in_size,tbatch_size, device, minmax, nameprop, lista_dias_de_las_secuencias)
 elif num_lay == 2:
-    nameprop = 'numTrayectsTest'+str(numTrayects_test)+modelname
+    nameprop = modelname
     # new dataset:  
-    predictions, targets = check_accuracy_imgs_seq2lay(test_loader, model, 'test','numtrayectstest'+str(numTrayects_test), loss_func, test_state,sequence_length_test,in_size,tbatch_size, device, minmax,nameprop, lista_dias_de_las_secuencias)
+    predictions, targets = check_accuracy_imgs_seq2lay(test_loader, model, 'test','TestFijo/numtrayectstest'+str(numTrayects_test), loss_func, test_state,sequence_length_test,in_size,tbatch_size, device, minmax,nameprop, lista_dias_de_las_secuencias)
 else:
     print('Fallo en la comprobación de eficiencia')
