@@ -52,7 +52,7 @@ print(device)
 # In[5.1]: Preprocesado de los datos de entrenamiento
 
 # Apertura del documento que contiene los datos del conjunto de entrenamiento
-txt ="conjuntoTrain_numTrayectorias170_Nexus_difGPSfreqcon0_numTrayectoriasTest7_numTrayectoriasValid57_distValidTrain.csv"
+txt ="conjuntoTrain_numTrayectorias20_Nexus_difGPSfreqcon0_numTrayectoriasTest205_numTrayectoriasValid9_distValidTrain.csv"
 coordenadas_train = pd.read_csv("/home/laura/DATASETS/train_dataset/Dataset/Nexus/"+txt,header=None) 
 
 
@@ -96,7 +96,7 @@ trayect_labels_train_norm = torch.tensor(trayect_labels_train_norm, dtype= torch
 # In[5.2]: Preprocesado de los datos de validación
 
 # Apertura del documento que contiene los datos del conjunto de validación
-txt_valid = 'conjuntoValid_numTrayectorias170_numTrayectoriasValid57_Nexus_difGPSfreqcon0_numTrayectoriasTest7_distValidTrain.csv'
+txt_valid = 'conjuntoValid_numTrayectorias20_numTrayectoriasValid9_Nexus_difGPSfreqcon0_numTrayectoriasTest205_distValidTrain.csv'
 coordenadas_valid= pd.read_csv("/home/laura/DATASETS/valid_dataset/Dataset/Nexus/"+txt_valid,header=None) 
 
 numeros_nombre_valid = [float(s) for s in re.findall(r'-?\d+\.?\d*', txt_valid)]
@@ -592,8 +592,8 @@ else:
 
 """ Añadir los ficheros creados para indicar los días a los que pertenecen las distintas secuencias / trayectorias"""
 
-numtrayectsTrain_txt = "numTrayectoriasTrain170_Nexus_numTrayectoriasTest7_numTrayectoriasValid57_numerodetrayectoriaspordia_test_distValidTrain.csv"
-numtrayectsValid_txt = "numTrayectoriasValid57_Nexus_numTrayectoriasTrain170_numTrayectoriasTest7_numerodetrayectoriaspordia_test_distValidTrain.csv"
+numtrayectsTrain_txt = "numTrayectoriasTrain20_Nexus_numTrayectoriasTest205_numTrayectoriasValid9_numerodetrayectoriaspordia_test_distValidTrain.csv"
+numtrayectsValid_txt = "numTrayectoriasValid9_Nexus_numTrayectoriasTrain20_numTrayectoriasTest205_numerodetrayectoriaspordia_test_distValidTrain.csv"
 
 archivo_trayectoriasxdia_train = pd.read_csv("/home/laura/DATASETS/train_dataset/Dataset/Nexus/"+numtrayectsTrain_txt,header=None) 
 archivo_trayectoriasxdia_train = np.asarray(archivo_trayectoriasxdia_train).reshape(-1)
