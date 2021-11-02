@@ -52,8 +52,8 @@ print(device)
 # In[5.1]: Preprocesado de los datos de entrenamiento
 
 # Apertura del documento que contiene los datos del conjunto de entrenamiento
-txt ="conjuntoTrain_numTrayectorias20_Nexus_difGPSfreqcon0_numTrayectoriasTest205_numTrayectoriasValid9_distValidTrain.csv"
-coordenadas_train = pd.read_csv("/home/laura/DATASETS/train_dataset/Dataset/Nexus/"+txt,header=None) 
+txt ="conjuntoTrain_numTrayectorias20_Nexus_difGPSfreqcon0_numTrayectoriasTest23_numTrayectoriasValid9_distValidTrain.csv"
+coordenadas_train = pd.read_csv("/home/laura/DATASETS/train_dataset/Dataset/Nexus/TestFijo/"+txt,header=None) 
 
 
 # Extracción del número de trayectorias que conforman el conjunto de entrenamiento para facilitar su guardado y localización para tratar los datos
@@ -96,8 +96,8 @@ trayect_labels_train_norm = torch.tensor(trayect_labels_train_norm, dtype= torch
 # In[5.2]: Preprocesado de los datos de validación
 
 # Apertura del documento que contiene los datos del conjunto de validación
-txt_valid = 'conjuntoValid_numTrayectorias20_numTrayectoriasValid9_Nexus_difGPSfreqcon0_numTrayectoriasTest205_distValidTrain.csv'
-coordenadas_valid= pd.read_csv("/home/laura/DATASETS/valid_dataset/Dataset/Nexus/"+txt_valid,header=None) 
+txt_valid = 'conjuntoValid_numTrayectorias20_numTrayectoriasValid9_Nexus_difGPSfreqcon0_numTrayectoriasTest23_distValidTrain.csv'
+coordenadas_valid= pd.read_csv("/home/laura/DATASETS/valid_dataset/Dataset/Nexus/TestFijo/"+txt_valid,header=None) 
 
 numeros_nombre_valid = [float(s) for s in re.findall(r'-?\d+\.?\d*', txt_valid)]
 numTrayects_valid = int(numeros_nombre_valid[1])
@@ -515,14 +515,14 @@ patience = 20
 
 if sche == True:
     if optimizador ==1:
-        dirpath = 'models/model_numTrayectTrain'+str(numTrayect)+'seqtrain'+str(sequence_length_train)+'_numTrayectValid'+str(numTrayects_valid)+'_lr'+str(lr)+'_TeacherForcing'+str(teacher_forcing_ratio)+'_numLayers'+str(num_lay)+'_hiddNeurons'+str(hidd_d)+'_bs'+str(batch_size)+'_solape'+str(factor_solape)+'_optim'+str(optimizador)+'schedulerLRstepsize'+str(stepsize)+'gamma'+str(gamma)+'.pt'
+        dirpath = 'models/TestFijo/model_numTrayectTrain'+str(numTrayect)+'seqtrain'+str(sequence_length_train)+'_numTrayectValid'+str(numTrayects_valid)+'_lr'+str(lr)+'_TeacherForcing'+str(teacher_forcing_ratio)+'_numLayers'+str(num_lay)+'_hiddNeurons'+str(hidd_d)+'_bs'+str(batch_size)+'_solape'+str(factor_solape)+'_optim'+str(optimizador)+'schedulerLRstepsize'+str(stepsize)+'gamma'+str(gamma)+'.pt'
     elif optimizador ==2:
-        dirpath = 'models/model_numTrayectTrain'+str(numTrayect)+'seqtrain'+str(sequence_length_train)+'_numTrayectValid'+str(numTrayects_valid)+'_lr'+str(lr)+'_momentum'+str(momentum)+'_TeacherForcing'+str(teacher_forcing_ratio)+'_numLayers'+str(num_lay)+'_hiddNeurons'+str(hidd_d)+'_bs'+str(batch_size)+'_solape'+str(factor_solape)+'_optim'+str(optimizador)+'schedulerLRstepsize'+str(stepsize)+'gamma'+str(gamma)+'.pt'
+        dirpath = 'models/TestFijo/model_numTrayectTrain'+str(numTrayect)+'seqtrain'+str(sequence_length_train)+'_numTrayectValid'+str(numTrayects_valid)+'_lr'+str(lr)+'_momentum'+str(momentum)+'_TeacherForcing'+str(teacher_forcing_ratio)+'_numLayers'+str(num_lay)+'_hiddNeurons'+str(hidd_d)+'_bs'+str(batch_size)+'_solape'+str(factor_solape)+'_optim'+str(optimizador)+'schedulerLRstepsize'+str(stepsize)+'gamma'+str(gamma)+'.pt'
 else:
     if optimizador ==1:
-        dirpath = 'models/no_scheduler/model_numTrayectTrain'+str(numTrayect)+'seqtrain'+str(sequence_length_train)+'_numTrayectValid'+str(numTrayects_valid)+'_lr'+str(lr)+'_TeacherForcing'+str(teacher_forcing_ratio)+'_numLayers'+str(num_lay)+'_hiddNeurons'+str(hidd_d)+'_bs'+str(batch_size)+'_solape'+str(factor_solape)+'_optim'+str(optimizador)+'NoScheduler.pt'
+        dirpath = 'models/no_scheduler/TestFijo//model_numTrayectTrain'+str(numTrayect)+'seqtrain'+str(sequence_length_train)+'_numTrayectValid'+str(numTrayects_valid)+'_lr'+str(lr)+'_TeacherForcing'+str(teacher_forcing_ratio)+'_numLayers'+str(num_lay)+'_hiddNeurons'+str(hidd_d)+'_bs'+str(batch_size)+'_solape'+str(factor_solape)+'_optim'+str(optimizador)+'NoScheduler.pt'
     elif optimizador ==2:
-        dirpath = 'models/no_scheduler/model_numTrayectTrain'+str(numTrayect)+'seqtrain'+str(sequence_length_train)+'_numTrayectValid'+str(numTrayects_valid)+'_lr'+str(lr)+'_momentum'+str(momentum)+'_TeacherForcing'+str(teacher_forcing_ratio)+'_numLayers'+str(num_lay)+'_hiddNeurons'+str(hidd_d)+'_bs'+str(batch_size)+'_solape'+str(factor_solape)+'_optim'+str(optimizador)+'NoScheduler.pt'
+        dirpath = 'models/no_scheduler/TestFijo/model_numTrayectTrain'+str(numTrayect)+'seqtrain'+str(sequence_length_train)+'_numTrayectValid'+str(numTrayects_valid)+'_lr'+str(lr)+'_momentum'+str(momentum)+'_TeacherForcing'+str(teacher_forcing_ratio)+'_numLayers'+str(num_lay)+'_hiddNeurons'+str(hidd_d)+'_bs'+str(batch_size)+'_solape'+str(factor_solape)+'_optim'+str(optimizador)+'NoScheduler.pt'
 
 
 h_state = torch.zeros(num_lay, batch_size, hidd_d, dtype=torch.float).to(device)
@@ -585,17 +585,17 @@ plt.plot(training_losses, label='Training loss')
 plt.plot(validation_losses, label='Validation loss')
 plt.legend(frameon=False)
 if sche == True:
-    plt.savefig('models/train_valid_graph/model_numTrayectTrain'+str(numTrayect)+'seqtrain'+str(sequence_length_train)+'_numTrayectValid'+str(numTrayects_valid)+'_lr'+str(lr)+'_TeacherForcing'+str(teacher_forcing_ratio)+'_numLayers'+str(num_lay)+'_hiddNeurons'+str(hidd_d)+'_bs'+str(batch_size)+'_solape'+str(factor_solape)+'_optim'+str(optimizador)+'schedulerLRstepsize'+str(stepsize)+'gamma'+str(gamma)+'.png',format='png', dpi=600)
+    plt.savefig('models/train_valid_graph/TestFijo/model_numTrayectTrain'+str(numTrayect)+'seqtrain'+str(sequence_length_train)+'_numTrayectValid'+str(numTrayects_valid)+'_lr'+str(lr)+'_TeacherForcing'+str(teacher_forcing_ratio)+'_numLayers'+str(num_lay)+'_hiddNeurons'+str(hidd_d)+'_bs'+str(batch_size)+'_solape'+str(factor_solape)+'_optim'+str(optimizador)+'schedulerLRstepsize'+str(stepsize)+'gamma'+str(gamma)+'.png',format='png', dpi=600)
 else:
-    plt.savefig('models/train_valid_graph/model_numTrayectTrain'+str(numTrayect)+'seqtrain'+str(sequence_length_train)+'_numTrayectValid'+str(numTrayects_valid)+'_lr'+str(lr)+'_TeacherForcing'+str(teacher_forcing_ratio)+'_numLayers'+str(num_lay)+'_hiddNeurons'+str(hidd_d)+'_bs'+str(batch_size)+'_solape'+str(factor_solape)+'_optim'+str(optimizador)+'NoScheduler.png',format='png', dpi=600)    
+    plt.savefig('models/train_valid_graph/TestFijo/model_numTrayectTrain'+str(numTrayect)+'seqtrain'+str(sequence_length_train)+'_numTrayectValid'+str(numTrayects_valid)+'_lr'+str(lr)+'_TeacherForcing'+str(teacher_forcing_ratio)+'_numLayers'+str(num_lay)+'_hiddNeurons'+str(hidd_d)+'_bs'+str(batch_size)+'_solape'+str(factor_solape)+'_optim'+str(optimizador)+'NoScheduler.png',format='png', dpi=600)    
 
 
 """ Añadir los ficheros creados para indicar los días a los que pertenecen las distintas secuencias / trayectorias"""
 
-numtrayectsTrain_txt = "numTrayectoriasTrain20_Nexus_numTrayectoriasTest205_numTrayectoriasValid9_numerodetrayectoriaspordia_test_distValidTrain.csv"
-numtrayectsValid_txt = "numTrayectoriasValid9_Nexus_numTrayectoriasTrain20_numTrayectoriasTest205_numerodetrayectoriaspordia_test_distValidTrain.csv"
+numtrayectsTrain_txt = "numTrayectoriasTrain20_Nexus_numTrayectoriasTest23_numTrayectoriasValid9_numerodetrayectoriaspordia_test_distValidTrain.csv"
+numtrayectsValid_txt = "numTrayectoriasValid9_Nexus_numTrayectoriasTrain20_numTrayectoriasTest23_numerodetrayectoriaspordia_test_distValidTrain.csv"
 
-archivo_trayectoriasxdia_train = pd.read_csv("/home/laura/DATASETS/train_dataset/Dataset/Nexus/"+numtrayectsTrain_txt,header=None) 
+archivo_trayectoriasxdia_train = pd.read_csv("/home/laura/DATASETS/train_dataset/Dataset/Nexus/TestFijo/"+numtrayectsTrain_txt,header=None) 
 archivo_trayectoriasxdia_train = np.asarray(archivo_trayectoriasxdia_train).reshape(-1)
 
 num_dias_que_se_midieron_trayectorias_train = len(archivo_trayectoriasxdia_train)
@@ -615,7 +615,7 @@ else:
     print('Error con el numero de secuencias de Train')
     exit()
     
-archivo_trayectoriasxdia_valid = pd.read_csv("/home/laura/DATASETS/valid_dataset/Dataset/Nexus/"+numtrayectsValid_txt,header=None) 
+archivo_trayectoriasxdia_valid = pd.read_csv("/home/laura/DATASETS/valid_dataset/Dataset/Nexus/TestFijo/"+numtrayectsValid_txt,header=None) 
 archivo_trayectoriasxdia_valid = np.asarray(archivo_trayectoriasxdia_valid).reshape(-1)
 
 num_dias_que_se_midieron_trayectorias_valid = len(archivo_trayectoriasxdia_valid)
@@ -917,14 +917,14 @@ propiedades = propiedades+'\nEl modelo es el siguiente: \n\t '+str(model)+'\nY s
 # new dataset: 
 if sche == True:
     if optimizador == 1:
-        model.load_state_dict(torch.load('models/model_numTrayectTrain'+str(numTrayect)+'seqtrain'+str(sequence_length_train)+'_numTrayectValid'+str(numTrayects_valid)+'_lr'+str(lr)+'_TeacherForcing'+str(teacher_forcing_ratio)+'_numLayers'+str(num_lay)+'_hiddNeurons'+str(hidd_d)+'_bs'+str(batch_size)+'_solape'+str(factor_solape)+'_optim'+str(optimizador)+'schedulerLRstepsize'+str(stepsize)+'gamma'+str(gamma)+'.pt'))
+        model.load_state_dict(torch.load('models/TestFijo/model_numTrayectTrain'+str(numTrayect)+'seqtrain'+str(sequence_length_train)+'_numTrayectValid'+str(numTrayects_valid)+'_lr'+str(lr)+'_TeacherForcing'+str(teacher_forcing_ratio)+'_numLayers'+str(num_lay)+'_hiddNeurons'+str(hidd_d)+'_bs'+str(batch_size)+'_solape'+str(factor_solape)+'_optim'+str(optimizador)+'schedulerLRstepsize'+str(stepsize)+'gamma'+str(gamma)+'.pt'))
     elif optimizador == 2:
-        model.load_state_dict(torch.load('models/model_numTrayectTrain'+str(numTrayect)+'seqtrain'+str(sequence_length_train)+'_numTrayectValid'+str(numTrayects_valid)+'_lr'+str(lr)+'_momentum'+str(momentum)+'_TeacherForcing'+str(teacher_forcing_ratio)+'_numLayers'+str(num_lay)+'_hiddNeurons'+str(hidd_d)+'_bs'+str(batch_size)+'_solape'+str(factor_solape)+'_optim'+str(optimizador)+'schedulerLRstepsize'+str(stepsize)+'gamma'+str(gamma)+'.pt'))
+        model.load_state_dict(torch.load('models/TestFijo/model_numTrayectTrain'+str(numTrayect)+'seqtrain'+str(sequence_length_train)+'_numTrayectValid'+str(numTrayects_valid)+'_lr'+str(lr)+'_momentum'+str(momentum)+'_TeacherForcing'+str(teacher_forcing_ratio)+'_numLayers'+str(num_lay)+'_hiddNeurons'+str(hidd_d)+'_bs'+str(batch_size)+'_solape'+str(factor_solape)+'_optim'+str(optimizador)+'schedulerLRstepsize'+str(stepsize)+'gamma'+str(gamma)+'.pt'))
 else:
     if optimizador == 1:
-        model.load_state_dict(torch.load('models/no_scheduler/model_numTrayectTrain'+str(numTrayect)+'seqtrain'+str(sequence_length_train)+'_numTrayectValid'+str(numTrayects_valid)+'_lr'+str(lr)+'_TeacherForcing'+str(teacher_forcing_ratio)+'_numLayers'+str(num_lay)+'_hiddNeurons'+str(hidd_d)+'_bs'+str(batch_size)+'_solape'+str(factor_solape)+'_optim'+str(optimizador)+'NoScheduler.pt'))
+        model.load_state_dict(torch.load('models/no_scheduler/TestFijo/model_numTrayectTrain'+str(numTrayect)+'seqtrain'+str(sequence_length_train)+'_numTrayectValid'+str(numTrayects_valid)+'_lr'+str(lr)+'_TeacherForcing'+str(teacher_forcing_ratio)+'_numLayers'+str(num_lay)+'_hiddNeurons'+str(hidd_d)+'_bs'+str(batch_size)+'_solape'+str(factor_solape)+'_optim'+str(optimizador)+'NoScheduler.pt'))
     elif optimizador == 2:
-        model.load_state_dict(torch.load('models/no_scheduler/model_numTrayectTrain'+str(numTrayect)+'seqtrain'+str(sequence_length_train)+'_numTrayectValid'+str(numTrayects_valid)+'_lr'+str(lr)+'_momentum'+str(momentum)+'_TeacherForcing'+str(teacher_forcing_ratio)+'_numLayers'+str(num_lay)+'_hiddNeurons'+str(hidd_d)+'_bs'+str(batch_size)+'_solape'+str(factor_solape)+'_optim'+str(optimizador)+'NoScheduler.pt'))
+        model.load_state_dict(torch.load('models/no_scheduler/TestFijo/model_numTrayectTrain'+str(numTrayect)+'seqtrain'+str(sequence_length_train)+'_numTrayectValid'+str(numTrayects_valid)+'_lr'+str(lr)+'_momentum'+str(momentum)+'_TeacherForcing'+str(teacher_forcing_ratio)+'_numLayers'+str(num_lay)+'_hiddNeurons'+str(hidd_d)+'_bs'+str(batch_size)+'_solape'+str(factor_solape)+'_optim'+str(optimizador)+'NoScheduler.pt'))
 minmax = [minmaxlat_train, minmaxlon_train]
 
 train_state = torch.zeros(num_lay, batch_size, hidd_d, dtype=torch.float).to(device)
@@ -945,8 +945,8 @@ if num_lay == 3:
             nameprop='lr'+str(lr)+'_momentum'+str(momentum)+'batchsize'+str(batch_size)+'hidd'+str(hidd_d)+'numlay'+str(num_lay)+'%solape'+str(factor_solape)+'lonsec'+str(sequence_length_train)+'_optim'+str(optimizador)+'NoScheduler'
     
     # new dataset:  
-    predictions, targets = check_accuracy_imgs_seq(train_loader, model, 'train','numtrayectstrain'+str(numTrayect)+'_numtrayectsvalid'+str(numTrayects_valid)+'_seqlen'+str(sequence_length_train)+'_TeacherForcing'+str(teacher_forcing_ratio), loss_func, train_state,sequence_length_train,in_size,batch_size, device, minmax, propiedades, nameprop, lista_dias_train)
-    predictions, targets = check_accuracy_imgs_seq(valid_loader, model, 'valid','numtrayectstrain'+str(numTrayect)+'_numtrayectsvalid'+str(numTrayects_valid)+'_seqlen'+str(sequence_length_train)+'_TeacherForcing'+str(teacher_forcing_ratio), loss_func, valid_state,sequence_length_valid,in_size,tbatch_size, device, minmax, propiedades, nameprop, lista_dias_valid)
+    predictions, targets = check_accuracy_imgs_seq(train_loader, model, 'train','TestFijo/numtrayectstrain'+str(numTrayect)+'_numtrayectsvalid'+str(numTrayects_valid)+'_seqlen'+str(sequence_length_train)+'_TeacherForcing'+str(teacher_forcing_ratio), loss_func, train_state,sequence_length_train,in_size,batch_size, device, minmax, propiedades, nameprop, lista_dias_train)
+    predictions, targets = check_accuracy_imgs_seq(valid_loader, model, 'valid','TestFijo/numtrayectstrain'+str(numTrayect)+'_numtrayectsvalid'+str(numTrayects_valid)+'_seqlen'+str(sequence_length_train)+'_TeacherForcing'+str(teacher_forcing_ratio), loss_func, valid_state,sequence_length_valid,in_size,tbatch_size, device, minmax, propiedades, nameprop, lista_dias_valid)
 elif num_lay == 2:
     # new dataset:  
     if sche == True:
@@ -959,8 +959,8 @@ elif num_lay == 2:
             nameprop='lr'+str(lr)+'batchsize'+str(batch_size)+'hidd'+str(hidd_d)+'numlay'+str(num_lay)+'%solape'+str(factor_solape)+'lonsec'+str(sequence_length_train)+'_optim'+str(optimizador)+'NoScheduler'
         elif optimizador == 2:
             nameprop='lr'+str(lr)+'_momentum'+str(momentum)+'batchsize'+str(batch_size)+'hidd'+str(hidd_d)+'numlay'+str(num_lay)+'%solape'+str(factor_solape)+'lonsec'+str(sequence_length_train)+'_optim'+str(optimizador)+'NoScheduler'
-    predictions, targets = check_accuracy_imgs_seq2lay(train_loader, model, 'train','numtrayectstrain'+str(numTrayect)+'_numtrayectsvalid'+str(numTrayects_valid)+'_seqlen'+str(sequence_length_train)+'_TeacherForcing'+str(teacher_forcing_ratio), loss_func, train_state,sequence_length_train,in_size,batch_size, device, minmax, propiedades, nameprop, lista_dias_train)
-    predictions, targets = check_accuracy_imgs_seq2lay(valid_loader, model, 'valid','numtrayectstrain'+str(numTrayect)+'_numtrayectsvalid'+str(numTrayects_valid)+'_seqlen'+str(sequence_length_valid)+'_TeacherForcing'+str(teacher_forcing_ratio), loss_func, valid_state,sequence_length_valid,in_size,tbatch_size, device, minmax, propiedades, nameprop, lista_dias_valid)
+    predictions, targets = check_accuracy_imgs_seq2lay(train_loader, model, 'train','TestFijo/numtrayectstrain'+str(numTrayect)+'_numtrayectsvalid'+str(numTrayects_valid)+'_seqlen'+str(sequence_length_train)+'_TeacherForcing'+str(teacher_forcing_ratio), loss_func, train_state,sequence_length_train,in_size,batch_size, device, minmax, propiedades, nameprop, lista_dias_train)
+    predictions, targets = check_accuracy_imgs_seq2lay(valid_loader, model, 'valid','TestFijo/numtrayectstrain'+str(numTrayect)+'_numtrayectsvalid'+str(numTrayects_valid)+'_seqlen'+str(sequence_length_valid)+'_TeacherForcing'+str(teacher_forcing_ratio), loss_func, valid_state,sequence_length_valid,in_size,tbatch_size, device, minmax, propiedades, nameprop, lista_dias_valid)
 else:
     print('Fallo en la comprobación de eficiencia')
 
